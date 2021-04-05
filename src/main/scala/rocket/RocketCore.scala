@@ -212,7 +212,7 @@ class Rocket(tile: RocketTile)(implicit p: Parameters) extends CoreModule()(p)
 
   val wb_reg_valid           = Reg(Bool())
   val wb_reg_xcpt            = Reg(Bool())
-  val wb_reg_replay          = Reg(Bool())
+  val wb_reg_replay          = Reg(Bool())    // WB Replay if DCache Missed
   val wb_reg_flush_pipe      = Reg(Bool())
   val wb_reg_cause           = Reg(UInt())
   val wb_reg_sfence = Reg(Bool())
@@ -222,6 +222,9 @@ class Rocket(tile: RocketTile)(implicit p: Parameters) extends CoreModule()(p)
   val wb_reg_wdata = Reg(Bits())
   val wb_reg_rs2 = Reg(Bits())
   val take_pc_wb = Wire(Bool())
+  when(wb_reg_valid) {
+    printf("wb pc = %x\n", wb_reg_pc)
+  }
 
   val take_pc_mem_wb = take_pc_wb || take_pc_mem
   val take_pc = take_pc_mem_wb

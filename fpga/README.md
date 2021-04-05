@@ -49,6 +49,9 @@ Set environment variables:
 ```
 export RISCV=path/of/riscv-toolchain
 export PATH=$PATH:$RISCV/bin
+export C_INCLUDE_PATH=$RISCV/include
+export CPLUS_INCLUDE_PATH=$RISCV/include
+export LD_LIBRARY_PATH=$RISCV/lib
 ```
 
 ## Build RISC-V image

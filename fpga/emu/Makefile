@@ -1,5 +1,5 @@
 CHECK_RESULT = $(shell bash py-check.sh)
-
+LD_LIBRARY_PATH=$(RISCV)/lib
 base_dir = $(abspath ../..)
 fpga_dir = $(abspath ..)
 fpga_script_dir = $(fpga_dir)/scripts
@@ -16,7 +16,7 @@ SEED ?=
 # Emulator generation
 #--------------------------------------------------------------------
 
-original_emu = $(base_dir)/emulator/emulator-$(PROJECT)-$(CONFIG)
+original_emu = $(base_dir)/emulator/emulator-$(PROJECT)-$(CONFIG)-debug
 emu = $(build_dir)/emu
 emu_bin_file = $(build_dir)/linux.bin
 emu_gen_script = gen_bin.sh
@@ -32,11 +32,21 @@ ifdef HAS_MAX_CYCLES
 	OPT_MAX_CYCLE=-m $(max_cycles)
 endif
 
+$(fsdbfile): ../build/debug.vcd
+	vcd2fsdb ../build/debug.vcd
+	
+fsdbfile: $(fsdbfile)
+verdi: 
+	verdi -f ~/filelist.f -ssf debug.vcd.fsdb -nologo & 
+    
+
 $(emu): $(original_emu)
+	source export.sh
+	echo $(original_emu)
 	ln -sf $< $@
 
 $(original_emu):
-	$(MAKE) all -C $(base_dir)/emulator CONFIG=$(CONFIG) \
+	$(MAKE) debug -C $(base_dir)/emulator CONFIG=$(CONFIG) \
 		generated_dir=$(generated_dir)
 
 $(nohype_dtb): $(build_dir)/generated-src/freechips.rocketchip.system.$(CONFIG).dts
@@ -58,7 +68,10 @@ DEBUG_ARGS = +jtag_rbb_enable=1 -r 4040
 endif
 
 run-emu: $(emu) $(emu_bin_hex_file) $(nohype_dtb_hex_file)
-	cd $(dir $(emu)) && LD_LIBRARY_PATH=$(RISCV)/lib time $< $(DEBUG_ARGS) $(SEED) +verbose $(OPT_MAX_CYCLE) . 3>&1 1>&2 2>&3 \
+	echo $(original_emu)
+#	cd $(dir $(emu)) && LD_LIBRARY_PATH=$(RISCV)/lib time $< $(DEBUG_ARGS) $(SEED) -v debug.vcd +verbose $(OPT_MAX_CYCLE) . 3>&1 1>&2 2>&3 \
+
+	cd $(dir $(emu)) && LD_LIBRARY_PATH=$(RISCV)/lib time $< $(DEBUG_ARGS) $(SEED)  +verbose $(OPT_MAX_CYCLE) . 3>&1 1>&2 2>&3 \
 		| spike-dasm > $(dir $(emu))/emu.log
 
 dtb-clean:
